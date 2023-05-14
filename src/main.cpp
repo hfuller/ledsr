@@ -2,22 +2,8 @@
 
 #define DEBUG false
 
-////Pin connect to Latch
-const int latchPin = 3;
-////Pin connected to Clock
-const int clockPin = 4;
-////Pin connected to Data
-const int dataPin = 2;
-
-bool states[40];
-byte thing;
-
-//i is the "main Counter" for any app that is running.
-int i = 0;
-//This defines 1/framerate (aka the duration per frame in ms).
-int frameDuration = 100;
-//This is the light program that we are going to run. 0 is bootup, others defined elsewhere.
-int mode = 0;
+//This is where we set how many LEDs we have.
+#define NUM_LEDS 40
 
 //These are the possible LED behaviors.
 #define ON 0
@@ -30,7 +16,24 @@ int mode = 0;
 #define ON_PCT_20_RANDOM 7
 #define OFF_PCT_20_RANDOM 8
 
-int config[40];
+////Pin connect to Latch
+const int latchPin = 3;
+////Pin connected to Clock
+const int clockPin = 4;
+////Pin connected to Data
+const int dataPin = 2;
+
+bool states[NUM_LEDS];
+byte thing;
+
+//i is the "main Counter" for any app that is running.
+int i = 0;
+//This defines 1/framerate (aka the duration per frame in ms).
+int frameDuration = 100;
+//This is the light program that we are going to run. 0 is bootup, others defined elsewhere.
+int mode = 0;
+
+int config[NUM_LEDS];
 
 void setup() {
  //set pins to output because they are addressed in the main loop
@@ -72,7 +75,7 @@ void loop() {
  } else if ( mode == 1 ) {
 	 //Bootup
 	 frameDuration = 25;
-	 states[random(0,40)] = true;
+	 states[random(0,NUM_LEDS)] = true;
 	 if ( i * frameDuration > 5000 ) {
 		 mode++;
 		 i = 0;
