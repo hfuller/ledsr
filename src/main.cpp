@@ -12,7 +12,12 @@ const int dataPin = 2;
 bool states[40];
 byte thing;
 
-int i;
+//i is the "main Counter" for any app that is running.
+int i = 0;
+//This defines 1/framerate (aka the duration per frame in ms).
+int frameDuration = 100;
+//This is the light program that we are going to run. 0 is bootup, others defined elsewhere.
+int mode = 0;
 
 void setup() {
  //set pins to output because they are addressed in the main loop
@@ -24,23 +29,33 @@ void setup() {
  Serial.println("henlo");
  Serial.print(sizeof(states)); Serial.println(" leds");
 
- for ( int i = 0; i < sizeof(states); i++ ) {
-	 states[i] = false;
- }
- for ( int i = 0; i < 4; i++ ) {
-	 states[i] = true;
- }
+ Serial.println("Seeding rng");
+ randomSeed(analogRead(0));
 
- i = 0;
- 
 }
 
 
 void loop() {
- states[i] = true;
- Serial.println(i);
+ if ( DEBUG ) { Serial.print("!!! i == "); Serial.println(i); }
+ //EFFECTS CODE
+ if ( mode == 0 ) {
+	 //Blank All
+	 for ( int i = 0; i < sizeof(states); i++ ) {
+		 states[i] = false;
+	 }
+	 mode++;
+ } else if ( mode == 1 ) {
+	 //Bootup
+	 frameDuration = 25;
+	 states[random(0,40)] = true;
+	 if ( i * frameDuration > 5000 ) {
+		 mode = 0;
+		 i = 0;
+	 }
+ }
+ //END EFFECTS CODE
 
- Serial.print("Blitting "); Serial.print(ceil(sizeof(states)/8)); Serial.println(" bytes");
+ if ( DEBUG ) { Serial.print("Blitting "); Serial.print(ceil(sizeof(states)/8)); Serial.println(" bytes"); }
 
  digitalWrite(latchPin, LOW);
  for ( int j = 0; j < ceil(sizeof(states)/8); j++ ) {
@@ -62,11 +77,7 @@ void loop() {
  }
  if ( DEBUG ) Serial.println();
  digitalWrite(latchPin, HIGH);
- delay(200);
+ delay(frameDuration);
 
- states[i] = false;
  i++;
- if ( i >= sizeof(states) ) {
-	 i = 0;
- }
 }
