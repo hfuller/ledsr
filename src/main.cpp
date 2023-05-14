@@ -19,6 +19,19 @@ int frameDuration = 100;
 //This is the light program that we are going to run. 0 is bootup, others defined elsewhere.
 int mode = 0;
 
+//These are the possible LED behaviors.
+#define ON 0
+#define OFF 1
+#define TOGGLE_EVERY_FRAME 2
+#define ON_PCT_20 3
+#define ON_PCT_20_OTHER 4
+#define OFF_PCT_20 5
+#define OFF_PCT_20_OTHER 6
+#define ON_PCT_20_RANDOM 7
+#define OFF_PCT_20_RANDOM 8
+
+int config[40];
+
 void setup() {
  //set pins to output because they are addressed in the main loop
  pinMode(latchPin, OUTPUT);
@@ -32,6 +45,18 @@ void setup() {
  Serial.println("Seeding rng");
  randomSeed(analogRead(0));
 
+ //This is where the behavior for the LEDs is defined.
+ //Any LED that is not defined here will be ON.
+ config[0] = ON;
+ config[1] = OFF;
+ //config[2] = TOGGLE_EVERY_FRAME;
+ config[3] = ON_PCT_20;
+ config[4] = ON_PCT_20_OTHER;
+ config[5] = OFF_PCT_20;
+ config[6] = OFF_PCT_20_OTHER;
+ config[7] = ON_PCT_20_RANDOM;
+ config[8] = OFF_PCT_20_RANDOM;
+ config[9] = OFF_PCT_20_RANDOM;
 }
 
 
@@ -49,7 +74,35 @@ void loop() {
 	 frameDuration = 25;
 	 states[random(0,40)] = true;
 	 if ( i * frameDuration > 5000 ) {
-		 mode = 0;
+		 mode++;
+		 i = 0;
+	 }
+ } else if ( mode == 2 ) {
+	 //Run Mode
+	 frameDuration = 100;
+	 for ( int j=0; j<sizeof(states); j++ ) {
+		 if ( config[j] == TOGGLE_EVERY_FRAME ) {
+			 states[j] = ! states[j];
+		 } else if ( config[j] == ON_PCT_20 ) {
+			 states[j] = ( i % 10 <= 2 );
+		 } else if ( config[j] == ON_PCT_20_OTHER ) {
+			 states[j] = ( (i+4) % 10 <= 2 );
+		 } else if ( config[j] == OFF_PCT_20 ) {
+			 states[j] = !( i % 10 <= 2 );
+		 } else if ( config[j] == OFF_PCT_20_OTHER ) {
+			 states[j] = !( (i+4) % 10 <= 2 );
+		 } else if ( config[j] == ON_PCT_20_RANDOM ) {
+			 states[j] = ( random(0,10) <= 2 );
+		 } else if ( config[j] == OFF_PCT_20_RANDOM ) {
+			 states[j] = !( random(0,10) <= 2 );
+		 } else if ( config[j] == OFF ) {
+			 states[j] = false;
+		 } else {
+			 //just turn it on
+			 states[j] = true;
+		 }
+	 }
+	 if ( i > 50 ) {
 		 i = 0;
 	 }
  }
