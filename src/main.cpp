@@ -21,12 +21,13 @@ const int latchPin = 3;
 ////Pin connected to Clock
 const int clockPin = 4;
 ////Pin connected to Data
-const int dataPin = 2;
+const int dataPin = 5;
 
-const int troubleshootingButtonPin = 11;
+const int troubleshootingButtonPin = 2;
 
 bool states[NUM_LEDS];
 byte thing;
+bool toBeIncremented;
 
 //i is the "main Counter" for any app that is running.
 int i = 0;
@@ -39,9 +40,11 @@ int config[NUM_LEDS];
 
 void buttonInterrupt() {
 	if ( mode == 250 ) {
-		Serial.println(i++);
+		toBeIncremented = true;
 	} else {
-		mode = 250;
+		mode=250;
+		i=0;
+		toBeIncremented = false;
 	}
 }
 
@@ -128,9 +131,10 @@ void loop() {
 	 }
  } else if ( mode == 250 ) {
 	 //Troubleshooting Mode
-	 frameDuration = 500;
+	 frameDuration = 250;
 	 if ( i >= NUM_LEDS ) i=0;
 	 Serial.print("!!! Troubleshooting Mode. Keys: i=next LED. x=exit. 0=start over. This is LED #"); Serial.println(i);
+	 if ( DEBUG ) Serial.println(digitalRead(troubleshootingButtonPin));
 	 for ( int j = 0; j < sizeof(states); j++ ) {
 		 if ( j == i ) {
 			 states[j] = ! states[j];
@@ -163,7 +167,18 @@ void loop() {
  digitalWrite(latchPin, HIGH);
  delay(frameDuration);
 
- if ( mode != 250 ) i++;
+ if ( mode != 250 ) {
+	 i++;
+ } else {
+	 if ( toBeIncremented ) {
+		delay(500);
+		if ( !digitalRead(troubleshootingButtonPin) ) {
+			mode = 2;
+		}
+	 	i++;
+	 	toBeIncremented = false;
+	 }
+ }
  Serial.print('.'); //heartbeat
  if ( DEBUG ) Serial.println();
 
