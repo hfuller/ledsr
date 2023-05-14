@@ -50,6 +50,7 @@ void setup() {
 
  //This is where the behavior for the LEDs is defined.
  //Any LED that is not defined here will be ON.
+ //NOTE! You want to start counting LEDs at zero. The first LED config will be set at config[0].
  config[0] = ON;
  config[1] = OFF;
  //config[2] = TOGGLE_EVERY_FRAME;
