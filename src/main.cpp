@@ -23,6 +23,8 @@ const int clockPin = 4;
 ////Pin connected to Data
 const int dataPin = 2;
 
+const int troubleshootingButtonPin = 11;
+
 bool states[NUM_LEDS];
 byte thing;
 
@@ -35,18 +37,33 @@ int mode = 0;
 
 int config[NUM_LEDS];
 
+void buttonInterrupt() {
+	if ( mode == 250 ) {
+		Serial.println(i++);
+	} else {
+		mode = 250;
+	}
+}
+
 void setup() {
- //set pins to output because they are addressed in the main loop
- pinMode(latchPin, OUTPUT);
- pinMode(dataPin, OUTPUT);  
- pinMode(clockPin, OUTPUT);
  
  Serial.begin(9600);
  Serial.println("henlo");
  Serial.print(sizeof(states)); Serial.println(" leds");
 
+ Serial.println("Setting up debug button");
+ pinMode(troubleshootingButtonPin, INPUT_PULLUP);
+ attachInterrupt(digitalPinToInterrupt(troubleshootingButtonPin), buttonInterrupt, FALLING);
+
+ Serial.println("Setting up sr output");
+ pinMode(latchPin, OUTPUT);
+ pinMode(dataPin, OUTPUT);  
+ pinMode(clockPin, OUTPUT);
+
  Serial.println("Seeding rng");
  randomSeed(analogRead(0));
+
+ Serial.println("!!! FOR TROUBLESHOOTING MODE PRESS d AT ANY TIME !!!");
 
  //This is where the behavior for the LEDs is defined.
  //Any LED that is not defined here will be ON.
@@ -109,7 +126,18 @@ void loop() {
 	 if ( i > 50 ) {
 		 i = 0;
 	 }
+ } else if ( mode == 250 ) {
+	 //Troubleshooting Mode
+	 frameDuration = 500;
+	 if ( i >= NUM_LEDS ) i=0;
+	 Serial.print("!!! Troubleshooting Mode. Keys: i=next LED. x=exit. 0=start over. This is LED #"); Serial.println(i);
+	 for ( int j = 0; j < sizeof(states); j++ ) {
+		 if ( j == i ) {
+			 states[j] = ! states[j];
+		 } else states[j] = false;
+	 }
  }
+
  //END EFFECTS CODE
 
  if ( DEBUG ) { Serial.print("Blitting "); Serial.print(ceil(sizeof(states)/8)); Serial.println(" bytes"); }
@@ -132,9 +160,26 @@ void loop() {
 	 if ( DEBUG ) { Serial.print(j); Serial.print(" "); Serial.print(states[j*8]); Serial.print(" "); Serial.println(thing, BIN); }
 	 shiftOut(dataPin, clockPin, MSBFIRST, thing);
  }
- if ( DEBUG ) Serial.println();
  digitalWrite(latchPin, HIGH);
  delay(frameDuration);
 
- i++;
+ if ( mode != 250 ) i++;
+ Serial.print('.'); //heartbeat
+ if ( DEBUG ) Serial.println();
+
+ //Serial debug support
+ if ( Serial.available() > 0 ) {
+	 char c = Serial.read();
+	 if ( c == 'd' ) {
+		 mode = 250;
+	 } else if ( c == 'i' ) {
+		 i++;
+	 } else if ( c == '0' ) {
+		 i=0;
+	 } else { 
+		 mode = 2;
+	 }
+	 Serial.read(); //dump it
+ }
 }
+
