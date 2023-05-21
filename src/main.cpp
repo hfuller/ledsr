@@ -1,5 +1,10 @@
 #include "Arduino.h"
 
+//https://github.com/RobTillaart/PCF8575.git
+#include <PCF8575.h>
+//only for debug stuff
+#include <Wire.h>
+
 #define DEBUG false
 
 //This is where we set how many LEDs we have.
@@ -24,6 +29,9 @@ const int clockPin = 4;
 const int dataPin = 5;
 
 const int troubleshootingButtonPin = 2;
+
+PCF8575 xp[8];
+uint16_t xpvals[8];
 
 bool states[NUM_LEDS];
 byte thing;
@@ -66,6 +74,15 @@ void setup() {
 
  Serial.println("Seeding rng");
  randomSeed(analogRead(0));
+
+ Serial.println("Setting up gpio expanders");
+ for ( int j=0; j<8; j++ ) {
+	 xp[j] = PCF8575(0x20 + j);
+	 xp[j].begin(); 
+	 Serial.print("XP"); Serial.print(j); Serial.print(" at addr "); Serial.print(xp[j].getAddress());
+	 if ( ! xp[j].isConnected() ) Serial.print(" NOT");
+	 Serial.print(" connected - "); Serial.println(xp[j].read16(), HEX);
+ }
 
  Serial.println("!!! FOR TROUBLESHOOTING MODE PRESS d AT ANY TIME !!!");
 
@@ -180,8 +197,19 @@ void loop() {
 	 	toBeIncremented = false;
 	 }
  }
- Serial.print('.'); //heartbeat
- if ( DEBUG ) Serial.println();
+
+ //GPIO Expander handling.
+ for ( int j=0; j<8; j++ ) {
+	 uint16_t value = xp[j].read16();
+	 if ( value != xpvals[j] ) {
+		 for ( int k=0, mask=1; k < 16; k++, mask = mask << 1 ) {
+			 if ( ( value & mask ) != ( xpvals[j] & mask ) ) {
+				 Serial.print("FLIP "); Serial.print(j); Serial.print(" "); Serial.print(k); Serial.print(" "); Serial.println( ( value & mask ) == 0 );
+			 }
+		 }
+		 xpvals[j] = value;
+	 }
+ }
 
  //Serial debug support
  if ( Serial.available() > 0 ) {
@@ -195,15 +223,63 @@ void loop() {
 	 } else if ( c == 's' ) {
 		 //Set mode of specific LED. Syntax: 's 42 2' sets LED number 42 to be TOGGLE_EVERY_FRAME.
 		 int ledtoset = Serial.parseInt(SKIP_WHITESPACE);
-		 if ( ledtoset > 0 && ledtoset < NUM_LEDS ) {
+		 if ( ledtoset >= 0 && ledtoset < NUM_LEDS ) {
 			 config[ledtoset] = Serial.parseInt(SKIP_WHITESPACE);
 		 } else {
 			 Serial.print("set command parse error - "); Serial.println(ledtoset);
 		 }
+	 } else if ( c == 'r' ) {
+		 //Read GPIO expanders.
+		 for ( int j=0; j<8; j++ ) {
+			 Serial.print(xp[j].read16());
+		 }
+	 } else if ( c == '2' ) {
+		 //I2C Test
+		 Wire.begin();
+		 Serial.println("I2C bus scanning...");
+		 byte error, address;
+		 int nDevices;
+		
+		 Serial.println("Scanning...");
+		
+		 nDevices = 0;
+		 for(address = 1; address < 127; address++ ) 
+		 {
+		   // The i2c_scanner uses the return value of
+		   // the Write.endTransmisstion to see if
+		   // a device did acknowledge to the address.
+		   Wire.beginTransmission(address);
+		   error = Wire.endTransmission();
+		
+		   if (error == 0)
+		   {
+		     Serial.print("I2C device found at address 0x");
+		     if (address<16) 
+		       Serial.print("0");
+		     Serial.print(address,HEX);
+		     Serial.println("  !");
+		
+		     nDevices++;
+		   }
+		   else if (error==4) 
+		   {
+		     Serial.print("Unknown error at address 0x");
+		     if (address<16) 
+		       Serial.print("0");
+		     Serial.println(address,HEX);
+		   }    
+		 }
+		 if (nDevices == 0)
+		   Serial.println("No I2C devices found\n");
+		 else
+		   Serial.println("done\n");
+		 Serial.println("!!! YOU NEED to reboot the device now !!!");
 	 } else { 
 		 mode = 2;
 	 }
 	 Serial.read(); //dump it
  }
+
+ Serial.println(); //heartbeat
 }
 
