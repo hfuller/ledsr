@@ -107,7 +107,7 @@ void loop() {
  //EFFECTS CODE
  if ( mode == 0 ) {
 	 //Blank All
-	 for ( int i = 0; i < sizeof(states); i++ ) {
+	 for ( i = 0; i < sizeof(states); i++ ) {
 		 states[i] = false;
 	 }
 	 mode++;
