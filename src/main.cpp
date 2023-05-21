@@ -51,6 +51,7 @@ void buttonInterrupt() {
 void setup() {
  
  Serial.begin(9600);
+ Serial.setTimeout(100); //More responsive/less hangy serial rx
  Serial.println("henlo");
  Serial.print(sizeof(states)); Serial.println(" leds");
 
@@ -191,6 +192,14 @@ void loop() {
 		 i++;
 	 } else if ( c == '0' ) {
 		 i=0;
+	 } else if ( c == 's' ) {
+		 //Set mode of specific LED. Syntax: 's 42 2' sets LED number 42 to be TOGGLE_EVERY_FRAME.
+		 int ledtoset = Serial.parseInt(SKIP_WHITESPACE);
+		 if ( ledtoset > 0 && ledtoset < NUM_LEDS ) {
+			 config[ledtoset] = Serial.parseInt(SKIP_WHITESPACE);
+		 } else {
+			 Serial.print("set command parse error - "); Serial.println(ledtoset);
+		 }
 	 } else { 
 		 mode = 2;
 	 }
