@@ -1,0 +1,6 @@
+Designator,Footprint,Quantity,Value,LCSC Part #
+"H1, H2, H3, H4",MountingHole_3.2mm_M3_ISO7380,4,MountingHole,
+"J1, J3, J4, J6",PinHeader_2x08_P2.54mm_Vertical_Inline-number,4,Conn_02x08_Top_Bottom,
+"J2, J5",PinHeader_1x05_P2.54mm_Vertical,2,Conn_01x05,
+"JP1, JP2",SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,2,INT,
+"U1, U2",PCF8575_MODULE,2,PCF8575_MODULE,
